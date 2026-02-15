@@ -3,8 +3,7 @@
 
 ````markdown
 Intelligent Machine Learning Learning & Analysis Platform
-
-ZeraML System is a professional Machine Learning platform designed to **learn from data, train models, visualize results, explain mathematical formulas, detect overfitting, and make predictions**.  
+m is a professional Machine Learning platform designed to **learn from data, train models, visualize results, explain mathematical formulas, detect overfitting, and make predictions**.  
 It is also built to help students understand Machine Learning concepts step-by-step with visual explanations.
 
 ---
@@ -233,6 +232,7 @@ This project aims to:
 * Multi-user system
 
 ---
+
 
 
 
