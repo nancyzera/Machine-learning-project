@@ -1,128 +1,173 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import streamlit as st
 import pandas as pd
-from app import ml_models, utils, cycling_simulator
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split, learning_curve
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+import joblib
+import os
+
+st.set_page_config(page_title="💡 Intelligent ML Learning & Analysis Platform", layout="wide")
+st.title("💡 Intelligent Machine Learning Learning & Analysis Platform")
+
+MODEL_DIR = "models"
+os.makedirs(MODEL_DIR, exist_ok=True)
 
 
+st.sidebar.header("Controls")
+uploaded_file1 = st.sidebar.file_uploader("Upload Dataset 1 (CSV)", type="csv")
+uploaded_file2 = st.sidebar.file_uploader("Upload Dataset 2 (CSV, optional)", type="csv")
+model_option = st.sidebar.selectbox("Choose Model", ["Linear Regression", "Logistic Regression",
+                                                     "Decision Tree", "Random Forest", "KNN"])
+target_column = st.sidebar.text_input("Target Column (for prediction)", "")
+selected_features = st.sidebar.multiselect("Select Features (multi-column support)", [])
+run_button = st.sidebar.button("🚀 Run Process")
+forecast_days = st.sidebar.slider("7-Day Forecast Simulation", 1, 30, 7)
 
-st.set_page_config(page_title="💡 ML & Cycling Dashboard", layout="wide")
+
+df1 = df2 = None
+if uploaded_file1:
+    df1 = pd.read_csv(uploaded_file1)
+    df1 = df1.fillna(df1.mean(numeric_only=True))
+    st.subheader("✅ Dataset 1 Preview")
+    st.dataframe(df1.head())
+    st.write("Missing values per column:", df1.isnull().sum())
+
+if uploaded_file2:
+    df2 = pd.read_csv(uploaded_file2)
+    df2 = df2.fillna(df2.mean(numeric_only=True))
+    st.subheader("✅ Dataset 2 Preview")
+    st.dataframe(df2.head())
+    st.write("Missing values per column:", df2.isnull().sum())
 
 
-page = st.sidebar.selectbox("Choose Page", ["ML System", "Cycling Simulator"])
+if df1 is not None and df2 is not None:
+    st.subheader("📊 Dataset Comparison")
+    comparison = pd.DataFrame({
+        "Dataset1_mean": df1.mean(numeric_only=True),
+        "Dataset2_mean": df2.mean(numeric_only=True),
+        "Difference": df1.mean(numeric_only=True) - df2.mean(numeric_only=True)
+    })
+    st.dataframe(comparison)
 
-if page == "ML System":
-    st.markdown("<h1 style='color:#4B0082;'> Interactive ML System</h1>", unsafe_allow_html=True)
-
-    uploaded_file = st.file_uploader("Upload CSV dataset", type=["csv"])
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file)
-        st.subheader("Dataset Preview")
-        st.dataframe(df.head())
-        st.subheader("Summary Statistics")
-        st.write(df.describe())
-        st.subheader("Correlation Heatmap")
-        utils.plot_correlation(df)
+if run_button:
+    if df1 is None:
+        st.error("Please upload at least Dataset 1!")
+    elif target_column not in df1.columns:
+        st.error("Target column not found in Dataset 1!")
+    else:
+       
+        X = df1[selected_features] if selected_features else df1.drop(columns=[target_column])
+        y = df1[target_column]
 
      
-        st.subheader("Select Model")
-        model_choice = st.selectbox("Choose ML Model", ["Linear Regression", "Decision Tree", "Random Forest"])
-        target_column = st.selectbox("Select Target Column", df.columns)
+        st.subheader("🗂 Dataset Description")
+        st.write(df1.describe())
+        st.write(f"Number of features used: {X.shape[1]}")
 
-        st.subheader("Model Parameters (Optional)")
-        params = {}
-        if model_choice == "Decision Tree":
-            params["max_depth"] = st.slider("Max Depth", 1, 20, 5)
-            params["min_samples_split"] = st.slider("Min Samples Split", 2, 10, 2)
-        elif model_choice == "Random Forest":
-            params["n_estimators"] = st.slider("Number of Trees", 10, 200, 50)
-            params["max_depth"] = st.slider("Max Depth", 1, 20, 5)
-            params["min_samples_split"] = st.slider("Min Samples Split", 2, 10, 2)
+        test_size = st.sidebar.slider("Test Size (%)", 10, 50, 20)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size/100, random_state=42)
 
-        if st.button("Train Model"):
-            with st.spinner("Training model..."):
-                model, metrics, data_split = ml_models.train_model(df, target_column, model_choice, **params)
-            st.success("Model Trained Successfully!")
+        st.subheader(f"🛠 Training Model: {model_option}")
+        if model_option == "Linear Regression":
+            model = LinearRegression()
+            formula_text = "y = b0 + b1*x1 + b2*x2 + ... + bn*xn"
+            description_text = ("Linear Regression predicts a continuous target variable "
+                                "based on linear relationships between features and target.")
+        elif model_option == "Logistic Regression":
+            model = LogisticRegression(max_iter=1000)
+            formula_text = "p = 1 / (1 + e^-(b0 + b1*x1 + ... + bn*xn))"
+            description_text = ("Logistic Regression predicts the probability of a binary outcome "
+                                "using the logistic function.")
+        elif model_option == "Decision Tree":
+            model = DecisionTreeRegressor()
+            formula_text = "y = leaf value based on feature splits"
+            description_text = ("Decision Tree splits the data based on feature thresholds to predict values.")
+        elif model_option == "Random Forest":
+            model = RandomForestRegressor()
+            formula_text = "y = average predictions of multiple decision trees"
+            description_text = ("Random Forest is an ensemble of Decision Trees to improve prediction accuracy.")
+        elif model_option == "KNN":
+            model = KNeighborsRegressor()
+            formula_text = "y = average of k nearest neighbors"
+            description_text = ("K-Nearest Neighbors predicts by averaging outcomes of closest k points.")
 
-          
-            st.subheader("Metrics")
-            st.json(metrics)
+        model.fit(X_train, y_train)
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
 
-           
-            X_train, X_test, y_train, y_test, y_train_pred, y_test_pred = data_split
-            st.subheader("Predicted vs Actual (Test Set)")
-            utils.plot_predictions(y_test, y_test_pred)
+        st.success("Model Trained Successfully!")
 
-            st.subheader("Overfitting Check")
-            st.write(f"Train R2: {metrics['Train R2']:.4f} | Test R2: {metrics['Test R2']:.4f}")
-            st.write(f"Train MSE: {metrics['Train MSE']:.4f} | Test MSE: {metrics['Test MSE']:.4f}")
+        st.subheader("📝 Model Architecture & Mathematical Representation")
+        st.write(description_text)
+        st.latex(formula_text)
 
-         
-            st.subheader("Formulas Used")
-            utils.show_formula(model_choice)
+      
+        st.subheader("📊 Model Evaluation & Overfitting Check")
+        train_score = r2_score(y_train, y_pred_train)
+        test_score = r2_score(y_test, y_pred_test)
+        st.write(f"Training R2 Score: {train_score:.4f}")
+        st.write(f"Testing R2 Score: {test_score:.4f}")
+        if train_score > test_score + 0.1:
+            st.warning("⚠️ Possible Overfitting Detected!")
 
-           
-            st.subheader("AI Notes / Observations")
-            utils.generate_notes(model_choice, metrics)
+        mse_test = mean_squared_error(y_test, y_pred_test)
+        st.write(f"Testing MSE: {mse_test:.4f}")
 
-            st.info("Your ML model is ready. You can explore data, predictions, and overfitting!")
+        st.subheader("📈 Visual Testing (Predicted vs Actual)")
+        fig, ax = plt.subplots()
+        ax.scatter(y_test, y_pred_test)
+        ax.set_xlabel("Actual")
+        ax.set_ylabel("Predicted")
+        st.pyplot(fig)
 
-elif page == "Cycling Simulator":
-    st.markdown("<h1 style='color:#006400;'>🚴 Kigali Cycling Demand Simulator</h1>", unsafe_allow_html=True)
+        st.subheader("📉 Error Analysis (Residuals Distribution)")
+        residuals = y_test - y_pred_test
+        fig2, ax2 = plt.subplots()
+        sns.histplot(residuals, kde=True, ax=ax2)
+        ax2.set_xlabel("Residuals")
+        st.pyplot(fig2)
 
-    st.subheader("Input Baseline Trips ")
-    baseline_trips = {}
-    stations = ["Gikondo", "CBD", "Nyabugogo"]
-    for s in stations:
-        baseline_trips[s] = st.number_input(f"{s} baseline trips", value=500, step=50)
+       
+        st.subheader("📊 Learning Curves (Stability Test)")
+        train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
+        st.line_chart({
+            'Train Score': np.mean(train_scores, axis=1),
+            'Test Score': np.mean(test_scores, axis=1)
+        })
 
-    st.subheader("Scenario Parameters")
-    slope = st.slider("Road Slope (%)", 0, 20, 5)
-    infra_score = st.slider("Infrastructure Score", 0, 5, 1)
-    income_level = st.slider("Income Level", 0, 5, 1)
-    safety_score = st.slider("Safety Score", 0, 5, 1)
-    rain = st.number_input("Rainfall (mm)", 0, 100, 10)
-    wind = st.number_input("Wind Speed (m/s)", 0, 20, 3)
+        st.subheader(f"📅 {forecast_days}-Day Forecast Simulation")
+        if forecast_days > 0:
+            last_input = X.tail(1)
+            forecast_results = []
+            for i in range(forecast_days):
+                pred_day = model.predict(last_input)[0]
+                forecast_results.append(pred_day)
+              
+            st.line_chart(forecast_results)
 
-  
-    st.subheader("Pollution Data")
-    co = st.number_input("CO (ppm)", 0, 100, 30)
-    pm10 = st.number_input("PM10 (µg/m³)", 0, 200, 50)
-    o3 = st.number_input("O3 (ppb)", 0, 300, 100)
+        if model_option == "Linear Regression":
+            st.subheader("🔍 Loss Landscape (Grid Search Visualization)")
+            coefs = np.linspace(model.coef_.min() - 1, model.coef_.max() + 1, 50)
+            losses = []
+            X_matrix = X_train.to_numpy()
+            y_vector = y_train.to_numpy()
+            for c in coefs:
+                y_pred_temp = X_matrix[:,0] * c + model.intercept_
+                loss = ((y_vector - y_pred_temp) ** 2).mean()
+                losses.append(loss)
+            fig3, ax3 = plt.subplots()
+            ax3.plot(coefs, losses)
+            ax3.set_xlabel("Coefficient Value")
+            ax3.set_ylabel("Loss (MSE)")
+            st.pyplot(fig3)
 
-    if st.button("Run Scenario"):
-        results = cycling_simulator.calculate_demand(
-            baseline_trips=baseline_trips,
-            slope=slope,
-            infra_score=infra_score,
-            income_level=income_level,
-            safety_score=safety_score,
-            rain=rain,
-            wind=wind,
-            co=co,
-            pm10=pm10,
-            o3=o3
-        )
-
-        st.subheader("Simulation Results")
-        for station, data in results.items():
-            st.markdown(f"**{station}**: {data['Adjusted Trips']:.1f} trips "
-                        f"(<span style='color:blue;'>{data['Change (%)']:.2f}% change</span>)",
-                        unsafe_allow_html=True)
-
-        st.subheader("Formula Used")
-        st.code("""
-Ds_t = Dsbase * exp(
-    SLOPE_BETA*slope + INFRA_BETA*infra_score + 
-    INCOME_BETA*income_level + SAFETY_BETA*safety_score + 
-    RAIN_THETA*rain + WIND_THETA*wind + POLLUTION_THETA*PI
-)
-Percentage Change = ((Ds_t - Dsbase)/Dsbase) * 100
-""")
-        st.info("💡 You can modify any parameter to test different scenarios and observe changes in demand.")
-
-        
-        st.subheader("Visualized Results")
-        df_results = pd.DataFrame(results).T.reset_index().rename(columns={"index": "Station"})
-        st.bar_chart(df_results.set_index("Station")["Adjusted Trips"])
+        if st.button("💾 Save Model"):
+            model_path = os.path.join(MODEL_DIR, f"{model_option.replace(' ','_')}.pkl")
+            joblib.dump(model, model_path)
+            st.success(f"Model saved at {model_path}")
