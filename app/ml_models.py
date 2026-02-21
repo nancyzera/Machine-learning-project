@@ -59,8 +59,8 @@ def compute_learning_curve(model, X, y):
 
 def check_overfitting(metrics):
     if metrics["Train R2"] - metrics["Test R2"] > 0.2:
-        return "⚠️ Model is OVERFITTING"
-    return "✅ Model generalizes well"
+        return " Model is OVERFITTING"
+    return " Model generalizes well"
 
 
 def auto_train(df, target_column):
