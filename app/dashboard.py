@@ -12,8 +12,8 @@ from sklearn.metrics import mean_squared_error, r2_score
 import joblib
 import os
 
-st.set_page_config(page_title="💡 Intelligent ML Learning & Analysis Platform", layout="wide")
-st.title("💡 Intelligent Machine Learning Learning & Analysis Platform")
+st.set_page_config(page_title=" Intelligent ML Learning & Analysis Platform", layout="wide")
+st.title(" Intelligent Machine  Learning & Analysis Platform")
 
 MODEL_DIR = "models"
 os.makedirs(MODEL_DIR, exist_ok=True)
@@ -26,7 +26,7 @@ model_option = st.sidebar.selectbox("Choose Model", ["Linear Regression", "Logis
                                                      "Decision Tree", "Random Forest", "KNN"])
 target_column = st.sidebar.text_input("Target Column (for prediction)", "")
 selected_features = st.sidebar.multiselect("Select Features (multi-column support)", [])
-run_button = st.sidebar.button("🚀 Run Process")
+run_button = st.sidebar.button(" Run Process")
 forecast_days = st.sidebar.slider("7-Day Forecast Simulation", 1, 30, 7)
 
 
@@ -34,20 +34,20 @@ df1 = df2 = None
 if uploaded_file1:
     df1 = pd.read_csv(uploaded_file1)
     df1 = df1.fillna(df1.mean(numeric_only=True))
-    st.subheader("✅ Dataset 1 Preview")
+    st.subheader(" Dataset 1 Preview")
     st.dataframe(df1.head())
     st.write("Missing values per column:", df1.isnull().sum())
 
 if uploaded_file2:
     df2 = pd.read_csv(uploaded_file2)
     df2 = df2.fillna(df2.mean(numeric_only=True))
-    st.subheader("✅ Dataset 2 Preview")
+    st.subheader("Dataset 2 Preview")
     st.dataframe(df2.head())
     st.write("Missing values per column:", df2.isnull().sum())
 
 
 if df1 is not None and df2 is not None:
-    st.subheader("📊 Dataset Comparison")
+    st.subheader(" Dataset Comparison")
     comparison = pd.DataFrame({
         "Dataset1_mean": df1.mean(numeric_only=True),
         "Dataset2_mean": df2.mean(numeric_only=True),
@@ -66,14 +66,14 @@ if run_button:
         y = df1[target_column]
 
      
-        st.subheader("🗂 Dataset Description")
+        st.subheader(" Dataset Description")
         st.write(df1.describe())
         st.write(f"Number of features used: {X.shape[1]}")
 
         test_size = st.sidebar.slider("Test Size (%)", 10, 50, 20)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size/100, random_state=42)
 
-        st.subheader(f"🛠 Training Model: {model_option}")
+        st.subheader(f" Training Model: {model_option}")
         if model_option == "Linear Regression":
             model = LinearRegression()
             formula_text = "y = b0 + b1*x1 + b2*x2 + ... + bn*xn"
@@ -103,30 +103,30 @@ if run_button:
 
         st.success("Model Trained Successfully!")
 
-        st.subheader("📝 Model Architecture & Mathematical Representation")
+        st.subheader( Model Architecture & Mathematical Representation")
         st.write(description_text)
         st.latex(formula_text)
 
       
-        st.subheader("📊 Model Evaluation & Overfitting Check")
+        st.subheader(" Model Evaluation & Overfitting Check")
         train_score = r2_score(y_train, y_pred_train)
         test_score = r2_score(y_test, y_pred_test)
         st.write(f"Training R2 Score: {train_score:.4f}")
         st.write(f"Testing R2 Score: {test_score:.4f}")
         if train_score > test_score + 0.1:
-            st.warning("⚠️ Possible Overfitting Detected!")
+            st.warning(" Possible Overfitting Detected!")
 
         mse_test = mean_squared_error(y_test, y_pred_test)
         st.write(f"Testing MSE: {mse_test:.4f}")
 
-        st.subheader("📈 Visual Testing (Predicted vs Actual)")
+        st.subheader(" Visual Testing (Predicted vs Actual)")
         fig, ax = plt.subplots()
         ax.scatter(y_test, y_pred_test)
         ax.set_xlabel("Actual")
         ax.set_ylabel("Predicted")
         st.pyplot(fig)
 
-        st.subheader("📉 Error Analysis (Residuals Distribution)")
+        st.subheader(" Error Analysis (Residuals Distribution)")
         residuals = y_test - y_pred_test
         fig2, ax2 = plt.subplots()
         sns.histplot(residuals, kde=True, ax=ax2)
@@ -134,14 +134,14 @@ if run_button:
         st.pyplot(fig2)
 
        
-        st.subheader("📊 Learning Curves (Stability Test)")
+        st.subheader(" Learning Curves (Stability Test)")
         train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
         st.line_chart({
             'Train Score': np.mean(train_scores, axis=1),
             'Test Score': np.mean(test_scores, axis=1)
         })
 
-        st.subheader(f"📅 {forecast_days}-Day Forecast Simulation")
+        st.subheader(f" {forecast_days}-Day Forecast Simulation")
         if forecast_days > 0:
             last_input = X.tail(1)
             forecast_results = []
@@ -152,7 +152,7 @@ if run_button:
             st.line_chart(forecast_results)
 
         if model_option == "Linear Regression":
-            st.subheader("🔍 Loss Landscape (Grid Search Visualization)")
+            st.subheader(" Loss Landscape (Grid Search Visualization)")
             coefs = np.linspace(model.coef_.min() - 1, model.coef_.max() + 1, 50)
             losses = []
             X_matrix = X_train.to_numpy()
@@ -167,7 +167,7 @@ if run_button:
             ax3.set_ylabel("Loss (MSE)")
             st.pyplot(fig3)
 
-        if st.button("💾 Save Model"):
+        if st.button(" Save Model"):
             model_path = os.path.join(MODEL_DIR, f"{model_option.replace(' ','_')}.pkl")
             joblib.dump(model, model_path)
             st.success(f"Model saved at {model_path}")
