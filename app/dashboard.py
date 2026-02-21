@@ -103,7 +103,7 @@ if run_button:
 
         st.success("Model Trained Successfully!")
 
-        st.subheader( Model Architecture & Mathematical Representation")
+        st.subheader(" Model Architecture & Mathematical Representation")
         st.write(description_text)
         st.latex(formula_text)
 
