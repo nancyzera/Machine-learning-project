@@ -1,4 +1,4 @@
-
+f
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ class Filter:
         self.pm10 = pm10
         self.o3 = o3
 
-    def pollution_index():
+    def pollution_index(self):
         co_norm = self.co / 100
         pm10_norm = self.pm10 / 200
         o3_norm = self.o3 / 300
