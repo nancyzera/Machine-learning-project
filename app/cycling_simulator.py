@@ -3,7 +3,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+class brain:
     def __init__(self):
         self.SLOPE_BETA = -0.45
         self.INFRA_BETA = 0.30
