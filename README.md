@@ -144,26 +144,7 @@ pip install -r requirements.txt
 
 ##  Folder Structure
 
-```bash
-ML_System/
-│
-├── app/
-│   ├── dashboard.py          # Streamlit main UI
-│   ├── ml_models.py           # ML model training logic
-│   ├── preprocessing.py       # Data cleaning and preparation
-│   ├── visualizer.py           # Graph and plot functions
-│   ├── evaluator.py            # Model evaluation functions
-│   ├── formulas.py             # Mathematical formula explanations
-│   ├── utils.py                # Helper functions
-│   └── __init__.py
-│
-├── data/                       # Uploaded datasets
-├── models/                     # Saved ML models (.pkl)
-├── notebooks/                  # Research notebooks
-├── .venv/                      # Virtual environment
-├── requirements.txt
-└── README.md
-```
+
 
 ---
 
@@ -232,6 +213,7 @@ This project aims to:
 * Multi-user system
 
 ---
+
 
 
 
