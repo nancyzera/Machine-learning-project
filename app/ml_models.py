@@ -42,7 +42,7 @@ def train_model(df, target_column, model_type="Linear Regression", **params):
 def save_model(model, name):
     path = os.path.join(MODEL_DIR, f"{name}.pkl")
     joblib.dump(model, path)
-    return path
+    
 
 
 def get_feature_importance(model, X):
