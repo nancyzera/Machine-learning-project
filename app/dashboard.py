@@ -37,7 +37,7 @@ forecast_days = st.sidebar.slider("Forecast Days", 1, 30, 7)
 test_size = st.sidebar.slider("Test Size (%)", 10, 50, 20)
 run_button = st.sidebar.button("Run AI Pipeline")
 
-# ================= LOAD DATA =================
+# ================= SAFE LOAD =================
 def load_csv(file):
     try:
         return pd.read_csv(file)
@@ -45,6 +45,7 @@ def load_csv(file):
         return pd.read_csv(file, encoding="latin1")
 
 df1 = df2 = None
+
 if uploaded_file1:
     df1 = load_csv(uploaded_file1)
     st.subheader("Dataset 1 Preview")
@@ -60,7 +61,7 @@ selected_features = []
 if df1 is not None:
     selected_features = st.sidebar.multiselect("Select Features", df1.columns.tolist())
 
-# Dataset comparison
+# ================= DATASET COMPARISON =================
 if df1 is not None and df2 is not None:
     st.subheader("Dataset Statistical Comparison")
     comparison = pd.DataFrame({
@@ -78,20 +79,26 @@ if run_button:
         st.error("Target column not found!")
     else:
 
-        # Prepare dataset
+        # ================= DATA PREPROCESSING =================
         X = df1[selected_features] if selected_features else df1.drop(columns=[target_column])
         y = df1[target_column]
 
-        # Handle categorical features automatically
-        X_processed = pd.get_dummies(X, drop_first=True)
-        y_processed = y.values.ravel()
+        # Convert categorical/text to numeric
+        for col in X.columns:
+            if X[col].dtype == 'object':
+                X[col] = pd.factorize(X[col])[0]
+
+        # Fill missing values
+        X = X.fillna(X.mean())
+        y = y.fillna(y.mean())
+        y = y.values.ravel()
 
         st.subheader("Dataset Summary")
         st.write(df1.describe())
 
-        # Split data
+        # Split dataset
         X_train, X_test, y_train, y_test = train_test_split(
-            X_processed, y_processed, test_size=test_size/100, random_state=42
+            X, y, test_size=test_size/100, random_state=42
         )
 
         # ================= SELECT MODEL =================
@@ -120,11 +127,33 @@ if run_button:
 
         st.success("Model Trained Successfully")
 
-        # ================= MODEL EVALUATION =================
+        # ================= MATHEMATICAL THEORY =================
+        st.subheader("Mathematical Representation & Theory")
+        formulas = {
+            "Linear Regression": r"y = \beta_0 + \beta_1x_1 + ... + \beta_nx_n",
+            "Logistic Regression": r"P(y=1)=\frac{1}{1+e^{-(\beta_0+\beta_1x_1+...+\beta_nx_n)}}",
+            "Decision Tree": r"Gini = 1 - \sum p_i^2",
+            "Random Forest": r"\hat{y} = \frac{1}{T}\sum_{t=1}^{T} h_t(x)",
+            "KNN": r"\hat{y} = \frac{1}{k}\sum_{i=1}^{k} y_i",
+            "Negative Binomial": r"\log(E(Y)) = \beta_0 + \beta_1x_1 + ... + \beta_nx_n"
+        }
+        theory = {
+            "Linear Regression": "Predicts continuous values assuming linear relationship.",
+            "Logistic Regression": "Predicts probability using sigmoid function.",
+            "Decision Tree": "Splits data using entropy or Gini impurity.",
+            "Random Forest": "Ensemble of decision trees to reduce variance.",
+            "KNN": "Predicts using nearest neighbors.",
+            "Negative Binomial": "Used for over-dispersed count data."
+        }
+        st.write(theory[model_option])
+        st.latex(formulas[model_option])
+
+        # ================= EVALUATION =================
         st.subheader("Model Evaluation")
         train_score = r2_score(y_train, y_pred_train)
         test_score = r2_score(y_test, y_pred_test)
         mse_test = mean_squared_error(y_test, y_pred_test)
+
         st.metric("Train R²", train_score)
         st.metric("Test R²", test_score)
         st.metric("Test MSE", mse_test)
@@ -154,18 +183,18 @@ if run_button:
         # ================= LEARNING CURVE =================
         st.subheader("Learning Curve (Bias-Variance Test)")
         if model_option != "Negative Binomial":
-            train_sizes, train_scores, test_scores = learning_curve(model, X_processed, y_processed, cv=5)
+            train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
             curve_df = pd.DataFrame({
                 "Train Score": np.mean(train_scores, axis=1),
                 "Test Score": np.mean(test_scores, axis=1)
             })
             st.line_chart(curve_df)
         else:
-            st.warning("Learning curve not available for Negative Binomial")
+            st.warning("Learning curve not available for Negative Binomial (statsmodels)")
 
         # ================= FORECAST =================
         st.subheader("Future Forecast Simulation")
-        last_input = X_processed.tail(1)
+        last_input = X.tail(1)
         future_preds = []
         for _ in range(forecast_days):
             if model_option == "Negative Binomial":
@@ -175,52 +204,49 @@ if run_button:
             future_preds.append(pred)
         st.line_chart(future_preds)
 
-        # ================= CUSTOM INPUT FORM =================
+        # ================= CUSTOM INPUT PREDICTION =================
         st.subheader("Predict with Custom Inputs")
         if selected_features:
-            with st.form("custom_input_form"):
-                user_input = {}
-                for col in selected_features:
-                    if np.issubdtype(X[col].dtype, np.number):
-                        val = st.number_input(f"{col}", value=float(X[col].mean()))
-                        user_input[col] = val
-                    else:
-                        unique_vals = X[col].unique().tolist()
-                        val = st.selectbox(f"{col}", unique_vals)
-                        user_input[col] = val
-                submit = st.form_submit_button("Predict")
+            user_input = {}
+            st.write("Enter values for prediction:")
+            for col in selected_features:
+                if np.issubdtype(X[col].dtype, np.number):
+                    val = st.number_input(f"{col}", value=float(X[col].mean()))
+                    user_input[col] = val
+                else:
+                    unique_vals = X[col].unique().tolist()
+                    val = st.selectbox(f"{col}", unique_vals)
+                    user_input[col] = pd.factorize([val])[0][0]
 
-            if submit:
+            if st.button("Predict Custom Input"):
                 input_df = pd.DataFrame([user_input])
-                input_df_processed = pd.get_dummies(input_df)
-                # Align columns with training data
-                input_df_processed = input_df_processed.reindex(columns=X_processed.columns, fill_value=0)
                 if model_option == "Negative Binomial":
-                    input_df_nb = sm.add_constant(input_df_processed)
+                    input_df_nb = sm.add_constant(input_df)
                     pred = model.predict(input_df_nb)[0]
                 else:
-                    pred = model.predict(input_df_processed)[0]
+                    pred = model.predict(input_df)[0]
                 st.success(f"Predicted {target_column}: {pred:.4f}")
 
         # ================= AUTO MODEL COMPARISON =================
         st.subheader("Automatic Model Comparison")
-        compare_models = {
+        models = {
             "Linear Regression": LinearRegression(),
             "Decision Tree": DecisionTreeRegressor(),
             "Random Forest": RandomForestRegressor(),
             "KNN": KNeighborsRegressor()
         }
         results = []
-        for name, m in compare_models.items():
+        for name, m in models.items():
             m.fit(X_train, y_train)
             pred = m.predict(X_test)
             results.append([name, r2_score(y_test, pred), mean_squared_error(y_test, pred)])
         compare_df = pd.DataFrame(results, columns=["Model", "R2 Score", "MSE"])
         st.dataframe(compare_df)
+
         best_model = compare_df.sort_values("R2 Score", ascending=False).iloc[0]
         st.success(f"Best Model: {best_model['Model']} (R²={best_model['R2 Score']:.4f})")
 
-        # ================= AI EXPLANATION =================
+        # ================= AI EXPLANATION ENGINE =================
         st.subheader("AI Explanation")
         explanation = f"""
         The selected model **{model_option}** achieved an R² score of {test_score:.4f}.
