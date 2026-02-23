@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import joblib, os
+import statsmodels
 
 # Negative Binomial
 import statsmodels.api as sm
