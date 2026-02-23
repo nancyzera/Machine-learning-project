@@ -1,9 +1,9 @@
-
+f
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-class Brain:
+class brain:
     def __init__(self):
         self.SLOPE_BETA = -0.45
         self.INFRA_BETA = 0.30
@@ -53,7 +53,7 @@ class Scenario:
         return results
 
 def main():
-    st.markdown('<h1 style="color:#FF6F61;">🚴 Kigali Cycling Demand Simulator</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:#FF6F61;"> Kigali Cycling Demand Simulator</h1>', unsafe_allow_html=True)
 
  
     st.markdown("###  Input Baseline Trips (Dsbase)")
@@ -63,7 +63,7 @@ def main():
         baseline_trips[s] = st.number_input(f"Baseline trips at {s}", value=500, step=50)
 
    
-    st.markdown("### ⚙️ Input Scenario Parameters")
+    st.markdown("###  Input Scenario Parameters")
     slope = st.slider("Road Slope (%)", 0, 20, 5)
     infra_score = st.slider("Infrastructure Accessibility Score", 0, 5, 1)
     income_level = st.slider("Income Level", 0, 5, 1)
@@ -72,13 +72,13 @@ def main():
     wind = st.number_input("Wind Speed (m/s)", 0, 20, 3)
 
  
-    st.markdown("### 🌫 Pollution Data")
+    st.markdown("###  Pollution Data")
     co = st.number_input("CO (ppm)", 0, 100, 30)
     pm10 = st.number_input("PM10 (µg/m³)", 0, 200, 50)
     o3 = st.number_input("O3 (ppb)", 0, 300, 100)
 
   
-    st.markdown("### 📐 Model Formula")
+    st.markdown("### Model Formula")
     st.latex(r'Ds_t = Ds_{base} \times e^{\beta_{slope} Slope + \beta_{infra} Infra + \beta_{income} Income + \beta_{safety} Safety + \theta_{rain} Rain + \theta_{wind} Wind + \theta_{PI} PI}')
     st.markdown("""
 - **Slope**: Road gradient (%)
@@ -122,7 +122,7 @@ def main():
         st.pyplot(fig2)
 
         
-        st.markdown("### 🤖 AI Assistant Mode (Coming Soon)")
+        st.markdown("###  AI Assistant Mode (Coming Soon)")
         question = st.text_input("Ask about your cycling demand scenario:")
         if question:
             st.write("AI Mode will answer your questions here (under development).")
