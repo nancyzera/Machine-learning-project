@@ -9,25 +9,24 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_squared_error, r2_score
-import joblib
-import os
+import joblib, os
 
 # Negative Binomial
 import statsmodels.api as sm
 from statsmodels.genmod.families import NegativeBinomial
 
 # ================= PAGE CONFIG =================
-st.set_page_config(page_title=" Intelligent ML Learning & Analysis Platform", layout="wide")
-st.title(" Intelligent Machine Learning & Analysis Platform")
+st.set_page_config(page_title="AI ML Research Platform", layout="wide")
+st.title(" Intelligent Machine Learning Research & Analysis Platform")
 
-# ================= MODEL SAVE FOLDER =================
+# ================= SAVE FOLDER =================
 MODEL_DIR = "models"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 # ================= SIDEBAR =================
-st.sidebar.header("⚙️ Controls")
-uploaded_file1 = st.sidebar.file_uploader("Upload Dataset 1 (CSV)", type="csv")
-uploaded_file2 = st.sidebar.file_uploader("Upload Dataset 2 (CSV, optional)", type="csv")
+st.sidebar.header(" Controls")
+uploaded_file1 = st.sidebar.file_uploader("Upload Dataset 1", type="csv")
+uploaded_file2 = st.sidebar.file_uploader("Upload Dataset 2 (optional)", type="csv")
 
 model_option = st.sidebar.selectbox(
     "Choose Model",
@@ -35,103 +34,77 @@ model_option = st.sidebar.selectbox(
      "Random Forest", "KNN", "Negative Binomial"]
 )
 
-target_column = st.sidebar.text_input("Target Column (for prediction)", "")
-run_button = st.sidebar.button("🚀 Run Process")
-forecast_days = st.sidebar.slider("Forecast Simulation Days", 1, 30, 7)
+target_column = st.sidebar.text_input("Target Column")
+forecast_days = st.sidebar.slider("Forecast Days", 1, 30, 7)
 test_size = st.sidebar.slider("Test Size (%)", 10, 50, 20)
+run_button = st.sidebar.button(" Run AI Pipeline")
 
-# ================= SAFE CSV LOADER =================
+# ================= SAFE LOAD =================
 def load_csv(file):
     try:
         return pd.read_csv(file)
-    except UnicodeDecodeError:
+    except:
         return pd.read_csv(file, encoding="latin1")
 
 df1 = df2 = None
 
-# ================= LOAD DATASETS =================
 if uploaded_file1:
     df1 = load_csv(uploaded_file1)
     df1 = df1.fillna(df1.mean(numeric_only=True))
-    st.subheader(" Dataset 1 Preview")
+    st.subheader("Dataset 1 Preview")
     st.dataframe(df1.head())
-    st.write("Missing values:", df1.isnull().sum())
 
 if uploaded_file2:
     df2 = load_csv(uploaded_file2)
     df2 = df2.fillna(df2.mean(numeric_only=True))
-    st.subheader(" Dataset 2 Preview")
+    st.subheader("Dataset 2 Preview")
     st.dataframe(df2.head())
-    st.write("Missing values:", df2.isnull().sum())
 
-# ================= FEATURE SELECTION =================
+# Feature selection
 selected_features = []
 if df1 is not None:
-    selected_features = st.sidebar.multiselect(
-        "Select Features",
-        df1.columns.tolist()
-    )
+    selected_features = st.sidebar.multiselect("Select Features", df1.columns.tolist())
 
 # ================= DATASET COMPARISON =================
 if df1 is not None and df2 is not None:
-    st.subheader(" Dataset Comparison")
+    st.subheader("Dataset Statistical Comparison")
     comparison = pd.DataFrame({
-        "Dataset1_mean": df1.mean(numeric_only=True),
-        "Dataset2_mean": df2.mean(numeric_only=True),
+        "Dataset1 Mean": df1.mean(numeric_only=True),
+        "Dataset2 Mean": df2.mean(numeric_only=True),
         "Difference": df1.mean(numeric_only=True) - df2.mean(numeric_only=True)
     })
     st.dataframe(comparison)
 
-# ================= RUN ML PIPELINE =================
+# ================= RUN PIPELINE =================
 if run_button:
     if df1 is None:
-        st.error(" Upload Dataset 1 first!")
+        st.error("Upload dataset first!")
     elif target_column not in df1.columns:
-        st.error(" Target column not found!")
+        st.error("Target column not found!")
     else:
 
-        # Features & Target
         X = df1[selected_features] if selected_features else df1.drop(columns=[target_column])
         y = df1[target_column]
 
-        # Dataset description
-        st.subheader(" Dataset Description")
+        st.subheader("Dataset Summary")
         st.write(df1.describe())
-        st.write(f"Features used: {X.shape[1]}")
 
         # Split
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size / 100, random_state=42
+            X, y, test_size=test_size/100, random_state=42
         )
 
-        # ================= MODEL SELECTION =================
-        st.subheader(f" Training Model: {model_option}")
-
+        # ================= SELECT MODEL =================
         if model_option == "Linear Regression":
             model = LinearRegression()
-            formula_text = r"y = b_0 + b_1x_1 + b_2x_2 + ... + b_nx_n"
-            description_text = "Predicts continuous values using linear relationships."
-
         elif model_option == "Logistic Regression":
             model = LogisticRegression(max_iter=1000)
-            formula_text = r"p = \frac{1}{1 + e^{-(b_0 + b_1x_1 + ... + b_nx_n)}}"
-            description_text = "Predicts probability of binary outcomes."
-
         elif model_option == "Decision Tree":
             model = DecisionTreeRegressor()
-            formula_text = "Prediction based on decision rules"
-            description_text = "Splits data into branches to predict values."
-
         elif model_option == "Random Forest":
             model = RandomForestRegressor()
-            formula_text = "Average of many decision trees"
-            description_text = "Ensemble model for higher accuracy."
-
         elif model_option == "KNN":
             model = KNeighborsRegressor()
-            formula_text = "Average of nearest neighbors"
-            description_text = "Predicts using closest data points."
-
         elif model_option == "Negative Binomial":
             X_train_nb = sm.add_constant(X_train)
             X_test_nb = sm.add_constant(X_test)
@@ -139,45 +112,65 @@ if run_button:
             y_pred_train = model.predict(X_train_nb)
             y_pred_test = model.predict(X_test_nb)
 
-            formula_text = r"\log(E(Y)) = b_0 + b_1x_1 + ... + b_nx_n"
-            description_text = "Used for count data with over-dispersion."
-
-        # ================= TRAIN NORMAL MODELS =================
+        # Train normal ML models
         if model_option != "Negative Binomial":
             model.fit(X_train, y_train)
             y_pred_train = model.predict(X_train)
             y_pred_test = model.predict(X_test)
 
-        st.success(" Model Trained Successfully!")
+        st.success("Model Trained Successfully")
 
-        # ================= MODEL THEORY =================
-        st.subheader(" Model Architecture & Mathematical Representation")
-        st.write(description_text)
-        st.latex(formula_text)
+        # ================= MATHEMATICAL THEORY =================
+        st.subheader(" Mathematical Representation & Theory")
+
+        formulas = {
+            "Linear Regression": r"y = \beta_0 + \beta_1x_1 + ... + \beta_nx_n",
+            "Logistic Regression": r"P(y=1)=\frac{1}{1+e^{-(\beta_0+\beta_1x_1+...+\beta_nx_n)}}",
+            "Decision Tree": r"Gini = 1 - \sum p_i^2",
+            "Random Forest": r"\hat{y} = \frac{1}{T}\sum_{t=1}^{T} h_t(x)",
+            "KNN": r"\hat{y} = \frac{1}{k}\sum_{i=1}^{k} y_i",
+            "Negative Binomial": r"\log(E(Y)) = \beta_0 + \beta_1x_1 + ... + \beta_nx_n"
+        }
+
+        theory = {
+            "Linear Regression": "Predicts continuous values assuming linear relationship.",
+            "Logistic Regression": "Predicts probability using sigmoid function.",
+            "Decision Tree": "Splits data using entropy or Gini impurity.",
+            "Random Forest": "Ensemble of decision trees to reduce variance.",
+            "KNN": "Predicts using nearest neighbors.",
+            "Negative Binomial": "Used for over-dispersed count data."
+        }
+
+        st.write(theory[model_option])
+        st.latex(formulas[model_option])
 
         # ================= EVALUATION =================
-        st.subheader("Model Evaluation & Overfitting Check")
-
+        st.subheader(" Model Evaluation")
         train_score = r2_score(y_train, y_pred_train)
         test_score = r2_score(y_test, y_pred_test)
-
-        st.write(f"Training R² Score: {train_score:.4f}")
-        st.write(f"Testing R² Score: {test_score:.4f}")
-
-        if train_score > test_score + 0.1:
-            st.warning(" Possible Overfitting Detected!")
-
         mse_test = mean_squared_error(y_test, y_pred_test)
-        st.write(f"Testing MSE: {mse_test:.4f}")
 
-        # ================= PLOTS =================
-        st.subheader("Predicted vs Actual")
+        st.metric("Train R²", train_score)
+        st.metric("Test R²", test_score)
+        st.metric("Test MSE", mse_test)
+
+        # Overfitting AI warning
+        if train_score > test_score + 0.1:
+            st.warning(" Overfitting detected")
+        elif test_score < 0.5:
+            st.warning(" Weak model performance")
+        else:
+            st.success("Model generalizes well")
+
+        # ================= LIVE PREDICTION GRAPH =================
+        st.subheader("Live Prediction vs Actual")
         fig, ax = plt.subplots()
-        ax.scatter(y_test, y_pred_test)
-        ax.set_xlabel("Actual")
-        ax.set_ylabel("Predicted")
+        ax.plot(y_test.values, label="Actual")
+        ax.plot(y_pred_test, label="Predicted")
+        ax.legend()
         st.pyplot(fig)
 
+        # ================= RESIDUALS =================
         st.subheader("Residual Distribution")
         residuals = y_test - y_pred_test
         fig2, ax2 = plt.subplots()
@@ -185,9 +178,8 @@ if run_button:
         st.pyplot(fig2)
 
         # ================= LEARNING CURVE =================
-        st.subheader(" Learning Curves (Model Stability)")
+        st.subheader("Learning Curve (Bias-Variance Test)")
         train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
-
         curve_df = pd.DataFrame({
             "Train Score": np.mean(train_scores, axis=1),
             "Test Score": np.mean(test_scores, axis=1)
@@ -195,42 +187,56 @@ if run_button:
         st.line_chart(curve_df)
 
         # ================= FORECAST =================
-        st.subheader(f" {forecast_days}-Day Forecast Simulation")
+        st.subheader(" Future Forecast Simulation")
         last_input = X.tail(1)
-        forecast_results = []
+        future_preds = []
 
         for _ in range(forecast_days):
             if model_option == "Negative Binomial":
-                last_input_nb = sm.add_constant(last_input)
-                pred_day = model.predict(last_input_nb)[0]
+                pred = model.predict(sm.add_constant(last_input))[0]
             else:
-                pred_day = model.predict(last_input)[0]
+                pred = model.predict(last_input)[0]
+            future_preds.append(pred)
 
-            forecast_results.append(pred_day)
+        st.line_chart(future_preds)
 
-        st.line_chart(forecast_results)
+        # ================= AUTO MODEL COMPARISON =================
+        st.subheader(" Automatic Model Comparison")
 
-        # ================= LOSS LANDSCAPE =================
-        if model_option == "Linear Regression":
-            st.subheader("Loss Landscape Visualization")
-            coefs = np.linspace(model.coef_.min() - 1, model.coef_.max() + 1, 50)
-            losses = []
-            X_matrix = X_train.to_numpy()
-            y_vector = y_train.to_numpy()
+        models = {
+            "Linear Regression": LinearRegression(),
+            "Decision Tree": DecisionTreeRegressor(),
+            "Random Forest": RandomForestRegressor(),
+            "KNN": KNeighborsRegressor()
+        }
 
-            for c in coefs:
-                y_pred_temp = X_matrix[:, 0] * c + model.intercept_
-                loss = ((y_vector - y_pred_temp) ** 2).mean()
-                losses.append(loss)
+        results = []
+        for name, m in models.items():
+            m.fit(X_train, y_train)
+            pred = m.predict(X_test)
+            results.append([name, r2_score(y_test, pred), mean_squared_error(y_test, pred)])
 
-            fig3, ax3 = plt.subplots()
-            ax3.plot(coefs, losses)
-            ax3.set_xlabel("Coefficient Value")
-            ax3.set_ylabel("Loss (MSE)")
-            st.pyplot(fig3)
+        compare_df = pd.DataFrame(results, columns=["Model", "R2 Score", "MSE"])
+        st.dataframe(compare_df)
+
+        best_model = compare_df.sort_values("R2 Score", ascending=False).iloc[0]
+        st.success(f"Best Model: {best_model['Model']} (R²={best_model['R2 Score']:.4f})")
+
+        # ================= AI EXPLANATION ENGINE =================
+        st.subheader(" AI Explanation")
+
+        explanation = f"""
+        The selected model **{model_option}** achieved an R² score of {test_score:.4f}.
+        The best performing model among tested algorithms is **{best_model['Model']}**.
+        If R² is close to 1, the model explains most variance in data.
+        High MSE indicates prediction error magnitude.
+        Overfitting occurs when training score >> testing score.
+        """
+
+        st.write(explanation)
 
         # ================= SAVE MODEL =================
-        if st.button("💾 Save Model"):
-            model_path = os.path.join(MODEL_DIR, f"{model_option.replace(' ','_')}.pkl")
-            joblib.dump(model, model_path)
-            st.success(f"Model saved at {model_path}")
+        if st.button("Save Model"):
+            path = os.path.join(MODEL_DIR, f"{model_option.replace(' ','_')}.pkl")
+            joblib.dump(model, path)
+            st.success(f"Model saved: {path}")
