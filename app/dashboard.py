@@ -105,7 +105,11 @@ if run_button:
         if model_option == "Linear Regression":
             model = LinearRegression()
         elif model_option == "Logistic Regression":
-            model = LogisticRegression(max_iter=1000)
+            y_train = (y_train > np.median(y_train)).astype(int)
+    y_test = (y_test > np.median(y_test)).astype(int)
+    model = LogisticRegression(max_iter=1000)
+
+        
         elif model_option == "Decision Tree":
             model = DecisionTreeRegressor()
         elif model_option == "Random Forest":
@@ -205,27 +209,38 @@ if run_button:
         st.line_chart(future_preds)
 
         # ================= CUSTOM INPUT PREDICTION =================
-        st.subheader("Predict with Custom Inputs")
-        if selected_features:
-            user_input = {}
-            st.write("Enter values for prediction:")
-            for col in selected_features:
-                if np.issubdtype(X[col].dtype, np.number):
-                    val = st.number_input(f"{col}", value=float(X[col].mean()))
-                    user_input[col] = val
-                else:
-                    unique_vals = X[col].unique().tolist()
-                    val = st.selectbox(f"{col}", unique_vals)
-                    user_input[col] = pd.factorize([val])[0][0]
+       st.subheader("Predict with Custom Inputs")
+if selected_features:
+    user_input = {}
+    st.write("Enter values for prediction:")
 
-            if st.button("Predict Custom Input"):
-                input_df = pd.DataFrame([user_input])
-                if model_option == "Negative Binomial":
-                    input_df_nb = sm.add_constant(input_df)
-                    pred = model.predict(input_df_nb)[0]
-                else:
-                    pred = model.predict(input_df)[0]
-                st.success(f"Predicted {target_column}: {pred:.4f}")
+    for col in selected_features:
+        if np.issubdtype(X[col].dtype, np.number):
+            val = st.number_input(f"{col}", value=float(X[col].mean()))
+            user_input[col] = val
+        else:
+            unique_vals = X[col].unique().tolist()
+            val = st.selectbox(f"{col}", unique_vals)
+            user_input[col] = val  # Keep original category name
+
+    if st.button("Predict Custom Input"):
+        input_df = pd.DataFrame([user_input])
+
+        # Encode categorical columns same as training
+        for col in input_df.select_dtypes(include=['object']).columns:
+            input_df[col] = pd.Categorical(input_df[col], categories=X_train[col].cat.categories)
+            input_df[col] = input_df[col].codes
+
+        # Ensure all columns match training
+        input_df = input_df.reindex(columns=X_train.columns, fill_value=0)
+
+        # Add constant for Negative Binomial
+        if model_option == "Negative Binomial":
+            input_df = sm.add_constant(input_df)
+
+        # Predict
+        pred = model.predict(input_df)[0]
+        st.success(f"Predicted {target_column}: {pred:.4f}")
 
         # ================= AUTO MODEL COMPARISON =================
         st.subheader("Automatic Model Comparison")
