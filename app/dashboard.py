@@ -73,195 +73,170 @@ if df1 is not None and df2 is not None:
 
 # ================= RUN PIPELINE =================
 if run_button:
+
     if df1 is None:
         st.error("Upload dataset first!")
-    elif target_column not in df1.columns:
+        st.stop()
+
+    if target_column not in df1.columns:
         st.error("Target column not found!")
-    else:
+        st.stop()
 
-        # ================= DATA PREPROCESSING =================
-        X = df1[selected_features] if selected_features else df1.drop(columns=[target_column])
-        y = df1[target_column]
+    # ================= DATA PREPROCESSING =================
+    X = df1[selected_features] if selected_features else df1.drop(columns=[target_column])
+    y = df1[target_column]
 
-        # Convert categorical/text to numeric
-        for col in X.columns:
-            if X[col].dtype == 'object':
-                X[col] = pd.factorize(X[col])[0]
+    # Convert categorical columns
+    for col in X.columns:
+        if X[col].dtype == "object":
+            X[col] = pd.factorize(X[col])[0]
 
-        # Fill missing values
-        X = X.fillna(X.mean())
-        y = y.fillna(y.mean())
-        y = y.values.ravel()
+    X = X.fillna(X.mean())
+    y = y.fillna(y.mean()).values.ravel()
 
-        st.subheader("Dataset Summary")
-        st.write(df1.describe())
+    st.subheader("Dataset Summary")
+    st.write(df1.describe())
 
-        # Split dataset
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size/100, random_state=42
-        )
+    # Split dataset
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size/100, random_state=42
+    )
 
-        # ================= SELECT MODEL =================
-if model_option == "Linear Regression":
-    model = LinearRegression()
-elif model_option == "Logistic Regression":
-    model = LogisticRegression(max_iter=1000)
-elif model_option == "Decision Tree":
-    model = DecisionTreeRegressor()
-elif model_option == "Random Forest":
-    model = RandomForestRegressor()
-elif model_option == "KNN":
-    model = KNeighborsRegressor()
-elif model_option == "Negative Binomial":
-    X_train_nb = sm.add_constant(X_train)
-    X_test_nb = sm.add_constant(X_test)
-    model = sm.GLM(y_train, X_train_nb, family=NegativeBinomial()).fit()
-    y_pred_train = model.predict(X_train_nb)
-    y_pred_test = model.predict(X_test_nb)
+    # ================= MODEL SELECTION =================
+    if model_option == "Linear Regression":
+        model = LinearRegression()
+        model.fit(X_train, y_train)
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
 
-# ================= MATHEMATICAL THEORY =================
+    elif model_option == "Logistic Regression":
+        # Convert y to binary for logistic
+        y_bin = (y > np.median(y)).astype(int)
+        X_train, X_test, y_train, y_test = train_test_split(X, y_bin, test_size=test_size/100, random_state=42)
+        model = LogisticRegression(max_iter=1000)
+        model.fit(X_train, y_train)
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
+
+    elif model_option == "Decision Tree":
+        model = DecisionTreeRegressor()
+        model.fit(X_train, y_train)
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
+
+    elif model_option == "Random Forest":
+        model = RandomForestRegressor()
+        model.fit(X_train, y_train)
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
+
+    elif model_option == "KNN":
+        model = KNeighborsRegressor()
+        model.fit(X_train, y_train)
+        y_pred_train = model.predict(X_train)
+        y_pred_test = model.predict(X_test)
+
+    elif model_option == "Negative Binomial":
+        X_train_nb = sm.add_constant(X_train)
+        X_test_nb = sm.add_constant(X_test)
+        model = sm.GLM(y_train, X_train_nb, family=NegativeBinomial()).fit()
+        y_pred_train = model.predict(X_train_nb)
+        y_pred_test = model.predict(X_test_nb)
+
+    # ================= THEORY =================
     st.subheader("Mathematical Representation & Theory")
+
     formulas = {
         "Linear Regression": r"y = \beta_0 + \beta_1x_1 + ... + \beta_nx_n",
         "Logistic Regression": r"P(y=1)=\frac{1}{1+e^{-(\beta_0+\beta_1x_1+...+\beta_nx_n)}}",
         "Decision Tree": r"Gini = 1 - \sum p_i^2",
-        "Random Forest": r"\hat{y} = \frac{1}{T}\sum_{t=1}^{T} h_t(x)",
-        "KNN": r"\hat{y} = \frac{1}{k}\sum_{i=1}^{k} y_i",
-        "Negative Binomial": r"\log(E(Y)) = \beta_0 + \beta_1x_1 + ... + \beta_nx_n"
+        "Random Forest": r"\hat{y} = \frac{1}{T}\sum h_t(x)",
+        "KNN": r"\hat{y} = \frac{1}{k}\sum y_i",
+        "Negative Binomial": r"\log(E(Y)) = \beta_0 + \beta_1x_1 + ..."
     }
+
     theory = {
-        "Linear Regression": "Predicts continuous values assuming linear relationship.",
-        "Logistic Regression": "Predicts probability using sigmoid function.",
-        "Decision Tree": "Splits data using entropy or Gini impurity.",
-        "Random Forest": "Ensemble of decision trees to reduce variance.",
-        "KNN": "Predicts using nearest neighbors.",
-        "Negative Binomial": "Used for over-dispersed count data."
+        "Linear Regression": "Predicts continuous values.",
+        "Logistic Regression": "Binary classification model.",
+        "Decision Tree": "Tree-based splits.",
+        "Random Forest": "Multiple trees ensemble.",
+        "KNN": "Neighbor-based prediction.",
+        "Negative Binomial": "Count data regression."
     }
+
     st.write(theory[model_option])
     st.latex(formulas[model_option])
-    
+
     # ================= EVALUATION =================
     st.subheader("Model Evaluation")
     train_score = r2_score(y_train, y_pred_train)
     test_score = r2_score(y_test, y_pred_test)
     mse_test = mean_squared_error(y_test, y_pred_test)
-    
+
     st.metric("Train R²", train_score)
     st.metric("Test R²", test_score)
     st.metric("Test MSE", mse_test)
 
-if train_score > test_score + 0.1:
-    st.warning("Overfitting detected")
-elif test_score < 0.5:
-    st.warning("Weak model performance")
-else:
-    st.success("Model generalizes well")
-
-# ================= LIVE PREDICTION GRAPH =================
-st.subheader("Live Prediction vs Actual")
-fig, ax = plt.subplots()
-ax.plot(y_test, label="Actual")
-ax.plot(y_pred_test, label="Predicted")
-ax.legend()
-st.pyplot(fig)
-
-# ================= RESIDUALS =================
-st.subheader("Residual Distribution")
-residuals = y_test - y_pred_test
-fig2, ax2 = plt.subplots()
-sns.histplot(residuals, kde=True, ax=ax2)
-st.pyplot(fig2)
-
-# ================= LEARNING CURVE =================
-st.subheader("Learning Curve (Bias-Variance Test)")
-if model_option != "Negative Binomial":
-    train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
-    curve_df = pd.DataFrame({
-        "Train Score": np.mean(train_scores, axis=1),
-        "Test Score": np.mean(test_scores, axis=1)
-    })
-    st.line_chart(curve_df)
-else:
-    st.warning("Learning curve not available for Negative Binomial (statsmodels)")
-
-# ================= FORECAST =================
-st.subheader("Future Forecast Simulation")
-last_input = X.tail(1)
-future_preds = []
-for _ in range(forecast_days):
-    if model_option == "Negative Binomial":
-        pred = model.predict(sm.add_constant(last_input))[0]
+    if train_score > test_score + 0.1:
+        st.warning("Overfitting detected")
+    elif test_score < 0.5:
+        st.warning("Weak model performance")
     else:
-        pred = model.predict(last_input)[0]
-    future_preds.append(pred)
-st.line_chart(future_preds)
+        st.success("Model generalizes well")
 
-# ================= CUSTOM INPUT PREDICTION =================
-st.subheader("Predict with Custom Inputs")
-if selected_features:
-    user_input = {}
-    st.write("Enter values for prediction:")
+    # ================= PLOT =================
+    st.subheader("Live Prediction vs Actual")
+    fig, ax = plt.subplots()
+    ax.plot(y_test, label="Actual")
+    ax.plot(y_pred_test, label="Predicted")
+    ax.legend()
+    st.pyplot(fig)
 
-    for col in selected_features:
-        if np.issubdtype(X[col].dtype, np.number):
-            val = st.number_input(f"{col}", value=float(X[col].mean()))
-            user_input[col] = val
+    # ================= RESIDUALS =================
+    st.subheader("Residual Distribution")
+    residuals = y_test - y_pred_test
+    fig2, ax2 = plt.subplots()
+    sns.histplot(residuals, kde=True, ax=ax2)
+    st.pyplot(fig2)
+
+    # ================= LEARNING CURVE =================
+    st.subheader("Learning Curve")
+    if model_option != "Negative Binomial":
+        train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
+        curve_df = pd.DataFrame({
+            "Train Score": np.mean(train_scores, axis=1),
+            "Test Score": np.mean(test_scores, axis=1)
+        })
+        st.line_chart(curve_df)
+
+    # ================= FORECAST =================
+    st.subheader("Future Forecast Simulation")
+    last_input = X.tail(1)
+    future_preds = []
+    for _ in range(forecast_days):
+        if model_option == "Negative Binomial":
+            pred = model.predict(sm.add_constant(last_input))[0]
         else:
-            unique_vals = X[col].unique().tolist()
-            val = st.selectbox(f"{col}", unique_vals)
-            user_input[col] = val  # Keep original category name
+            pred = model.predict(last_input)[0]
+        future_preds.append(pred)
+    st.line_chart(future_preds)
+
+    # ================= CUSTOM INPUT =================
+    st.subheader("Predict with Custom Inputs")
+    user_input = {}
+    for col in X.columns:
+        val = st.number_input(col, value=float(X[col].mean()))
+        user_input[col] = val
 
     if st.button("Predict Custom Input"):
         input_df = pd.DataFrame([user_input])
-
-        # Encode categorical columns same as training
-        for col in input_df.select_dtypes(include=['object']).columns:
-            input_df[col] = pd.Categorical(input_df[col], categories=X_train[col].cat.categories)
-            input_df[col] = input_df[col].codes
-
-        # Ensure all columns match training
-        input_df = input_df.reindex(columns=X_train.columns, fill_value=0)
-
-        # Add constant for Negative Binomial
         if model_option == "Negative Binomial":
             input_df = sm.add_constant(input_df)
-
-        # Predict
         pred = model.predict(input_df)[0]
         st.success(f"Predicted {target_column}: {pred:.4f}")
 
-        # ================= AUTO MODEL COMPARISON =================
-        st.subheader("Automatic Model Comparison")
-        models = {
-            "Linear Regression": LinearRegression(),
-            "Decision Tree": DecisionTreeRegressor(),
-            "Random Forest": RandomForestRegressor(),
-            "KNN": KNeighborsRegressor()
-        }
-        results = []
-        for name, m in models.items():
-            m.fit(X_train, y_train)
-            pred = m.predict(X_test)
-            results.append([name, r2_score(y_test, pred), mean_squared_error(y_test, pred)])
-        compare_df = pd.DataFrame(results, columns=["Model", "R2 Score", "MSE"])
-        st.dataframe(compare_df)
-
-        best_model = compare_df.sort_values("R2 Score", ascending=False).iloc[0]
-        st.success(f"Best Model: {best_model['Model']} (R²={best_model['R2 Score']:.4f})")
-
-        # ================= AI EXPLANATION ENGINE =================
-        st.subheader("AI Explanation")
-        explanation = f"""
-        The selected model **{model_option}** achieved an R² score of {test_score:.4f}.
-        The best performing model among tested algorithms is **{best_model['Model']}**.
-        If R² is close to 1, the model explains most variance in data.
-        High MSE indicates prediction error magnitude.
-        Overfitting occurs when training score >> testing score.
-        """
-        st.write(explanation)
-
-        # ================= SAVE MODEL =================
-        if st.button("Save Model"):
-            path = os.path.join(MODEL_DIR, f"{model_option.replace(' ','_')}.pkl")
-            joblib.dump(model, path)
-            st.success(f"Model saved: {path}")    
+    # ================= SAVE MODEL =================
+    if st.button("Save Model"):
+        path = os.path.join(MODEL_DIR, f"{model_option.replace(' ','_')}.pkl")
+        joblib.dump(model, path)
+        st.success(f"Model saved: {path}")
