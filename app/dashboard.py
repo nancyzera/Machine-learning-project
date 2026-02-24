@@ -108,8 +108,6 @@ if run_button:
             y_train = (y_train > np.median(y_train)).astype(int)
     y_test = (y_test > np.median(y_test)).astype(int)
     model = LogisticRegression(max_iter=1000)
-
-        
         elif model_option == "Decision Tree":
             model = DecisionTreeRegressor()
         elif model_option == "Random Forest":
