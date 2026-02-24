@@ -103,7 +103,7 @@ if run_button:
 
         # ================= SELECT MODEL =================
     if model_option == "Linear Regression":
-    model = LinearRegression()
+         model = LinearRegression()
 elif model_option == "Logistic Regression":
     model = LogisticRegression(max_iter=1000)
 elif model_option == "Decision Tree":
