@@ -200,7 +200,7 @@ if run_button:
     st.pyplot(fig2)
 
     # ================= LEARNING CURVE =================
-st.subheader("Learning Curve")
+    st.subheader("Learning Curve")
     if model_option != "Negative Binomial":
         train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
         curve_df = pd.DataFrame({
