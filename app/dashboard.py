@@ -120,35 +120,35 @@ elif model_option == "Negative Binomial":
     y_pred_test = model.predict(X_test_nb)
 
 # ================= MATHEMATICAL THEORY =================
-st.subheader("Mathematical Representation & Theory")
-formulas = {
-    "Linear Regression": r"y = \beta_0 + \beta_1x_1 + ... + \beta_nx_n",
-    "Logistic Regression": r"P(y=1)=\frac{1}{1+e^{-(\beta_0+\beta_1x_1+...+\beta_nx_n)}}",
-    "Decision Tree": r"Gini = 1 - \sum p_i^2",
-    "Random Forest": r"\hat{y} = \frac{1}{T}\sum_{t=1}^{T} h_t(x)",
-    "KNN": r"\hat{y} = \frac{1}{k}\sum_{i=1}^{k} y_i",
-    "Negative Binomial": r"\log(E(Y)) = \beta_0 + \beta_1x_1 + ... + \beta_nx_n"
-}
-theory = {
-    "Linear Regression": "Predicts continuous values assuming linear relationship.",
-    "Logistic Regression": "Predicts probability using sigmoid function.",
-    "Decision Tree": "Splits data using entropy or Gini impurity.",
-    "Random Forest": "Ensemble of decision trees to reduce variance.",
-    "KNN": "Predicts using nearest neighbors.",
-    "Negative Binomial": "Used for over-dispersed count data."
-}
-st.write(theory[model_option])
-st.latex(formulas[model_option])
-
-# ================= EVALUATION =================
-st.subheader("Model Evaluation")
-train_score = r2_score(y_train, y_pred_train)
-test_score = r2_score(y_test, y_pred_test)
-mse_test = mean_squared_error(y_test, y_pred_test)
-
-st.metric("Train R²", train_score)
-st.metric("Test R²", test_score)
-st.metric("Test MSE", mse_test)
+    st.subheader("Mathematical Representation & Theory")
+    formulas = {
+        "Linear Regression": r"y = \beta_0 + \beta_1x_1 + ... + \beta_nx_n",
+        "Logistic Regression": r"P(y=1)=\frac{1}{1+e^{-(\beta_0+\beta_1x_1+...+\beta_nx_n)}}",
+        "Decision Tree": r"Gini = 1 - \sum p_i^2",
+        "Random Forest": r"\hat{y} = \frac{1}{T}\sum_{t=1}^{T} h_t(x)",
+        "KNN": r"\hat{y} = \frac{1}{k}\sum_{i=1}^{k} y_i",
+        "Negative Binomial": r"\log(E(Y)) = \beta_0 + \beta_1x_1 + ... + \beta_nx_n"
+    }
+    theory = {
+        "Linear Regression": "Predicts continuous values assuming linear relationship.",
+        "Logistic Regression": "Predicts probability using sigmoid function.",
+        "Decision Tree": "Splits data using entropy or Gini impurity.",
+        "Random Forest": "Ensemble of decision trees to reduce variance.",
+        "KNN": "Predicts using nearest neighbors.",
+        "Negative Binomial": "Used for over-dispersed count data."
+    }
+    st.write(theory[model_option])
+    st.latex(formulas[model_option])
+    
+    # ================= EVALUATION =================
+    st.subheader("Model Evaluation")
+    train_score = r2_score(y_train, y_pred_train)
+    test_score = r2_score(y_test, y_pred_test)
+    mse_test = mean_squared_error(y_test, y_pred_test)
+    
+    st.metric("Train R²", train_score)
+    st.metric("Test R²", test_score)
+    st.metric("Test MSE", mse_test)
 
 if train_score > test_score + 0.1:
     st.warning("Overfitting detected")
