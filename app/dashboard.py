@@ -200,14 +200,32 @@ if run_button:
     st.pyplot(fig2)
 
     # ================= LEARNING CURVE =================
-    st.subheader("Learning Curve")
-    if model_option != "Negative Binomial":
-        train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
+  # ================= LEARNING CURVE =================
+st.subheader("Learning Curve (Bias-Variance Test)")
+
+safe_for_curve = model_option not in ["Negative Binomial", "Logistic Regression"]
+
+if safe_for_curve and len(X) >= 20:
+    try:
+        train_sizes, train_scores, test_scores = learning_curve(
+            model,
+            X,
+            y,
+            cv=5,
+            scoring="r2",
+            n_jobs=-1
+        )
+
         curve_df = pd.DataFrame({
-            "Train Score": np.mean(train_scores, axis=1),
-            "Test Score": np.mean(test_scores, axis=1)
+            "Train Score": train_scores.mean(axis=1),
+            "Test Score": test_scores.mean(axis=1)
         })
         st.line_chart(curve_df)
+
+    except Exception as e:
+        st.warning("Learning curve could not be generated for this dataset/model.")
+else:
+    st.info("Learning curve not supported for this model or dataset size.")
 
     # ================= FORECAST =================
     st.subheader("Future Forecast Simulation")
