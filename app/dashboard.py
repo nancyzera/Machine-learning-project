@@ -102,8 +102,8 @@ if run_button:
         )
 
         # ================= SELECT MODEL =================
-    if model_option == "Linear Regression":
-         model = LinearRegression()
+if model_option == "Linear Regression":
+    model = LinearRegression()
 elif model_option == "Logistic Regression":
     model = LogisticRegression(max_iter=1000)
 elif model_option == "Decision Tree":
@@ -119,85 +119,85 @@ elif model_option == "Negative Binomial":
     y_pred_train = model.predict(X_train_nb)
     y_pred_test = model.predict(X_test_nb)
 
-        # ================= MATHEMATICAL THEORY =================
-        st.subheader("Mathematical Representation & Theory")
-        formulas = {
-            "Linear Regression": r"y = \beta_0 + \beta_1x_1 + ... + \beta_nx_n",
-            "Logistic Regression": r"P(y=1)=\frac{1}{1+e^{-(\beta_0+\beta_1x_1+...+\beta_nx_n)}}",
-            "Decision Tree": r"Gini = 1 - \sum p_i^2",
-            "Random Forest": r"\hat{y} = \frac{1}{T}\sum_{t=1}^{T} h_t(x)",
-            "KNN": r"\hat{y} = \frac{1}{k}\sum_{i=1}^{k} y_i",
-            "Negative Binomial": r"\log(E(Y)) = \beta_0 + \beta_1x_1 + ... + \beta_nx_n"
-        }
-        theory = {
-            "Linear Regression": "Predicts continuous values assuming linear relationship.",
-            "Logistic Regression": "Predicts probability using sigmoid function.",
-            "Decision Tree": "Splits data using entropy or Gini impurity.",
-            "Random Forest": "Ensemble of decision trees to reduce variance.",
-            "KNN": "Predicts using nearest neighbors.",
-            "Negative Binomial": "Used for over-dispersed count data."
-        }
-        st.write(theory[model_option])
-        st.latex(formulas[model_option])
+# ================= MATHEMATICAL THEORY =================
+st.subheader("Mathematical Representation & Theory")
+formulas = {
+    "Linear Regression": r"y = \beta_0 + \beta_1x_1 + ... + \beta_nx_n",
+    "Logistic Regression": r"P(y=1)=\frac{1}{1+e^{-(\beta_0+\beta_1x_1+...+\beta_nx_n)}}",
+    "Decision Tree": r"Gini = 1 - \sum p_i^2",
+    "Random Forest": r"\hat{y} = \frac{1}{T}\sum_{t=1}^{T} h_t(x)",
+    "KNN": r"\hat{y} = \frac{1}{k}\sum_{i=1}^{k} y_i",
+    "Negative Binomial": r"\log(E(Y)) = \beta_0 + \beta_1x_1 + ... + \beta_nx_n"
+}
+theory = {
+    "Linear Regression": "Predicts continuous values assuming linear relationship.",
+    "Logistic Regression": "Predicts probability using sigmoid function.",
+    "Decision Tree": "Splits data using entropy or Gini impurity.",
+    "Random Forest": "Ensemble of decision trees to reduce variance.",
+    "KNN": "Predicts using nearest neighbors.",
+    "Negative Binomial": "Used for over-dispersed count data."
+}
+st.write(theory[model_option])
+st.latex(formulas[model_option])
 
-        # ================= EVALUATION =================
-        st.subheader("Model Evaluation")
-        train_score = r2_score(y_train, y_pred_train)
-        test_score = r2_score(y_test, y_pred_test)
-        mse_test = mean_squared_error(y_test, y_pred_test)
+# ================= EVALUATION =================
+st.subheader("Model Evaluation")
+train_score = r2_score(y_train, y_pred_train)
+test_score = r2_score(y_test, y_pred_test)
+mse_test = mean_squared_error(y_test, y_pred_test)
 
-        st.metric("Train R²", train_score)
-        st.metric("Test R²", test_score)
-        st.metric("Test MSE", mse_test)
+st.metric("Train R²", train_score)
+st.metric("Test R²", test_score)
+st.metric("Test MSE", mse_test)
 
-        if train_score > test_score + 0.1:
-            st.warning("Overfitting detected")
-        elif test_score < 0.5:
-            st.warning("Weak model performance")
-        else:
-            st.success("Model generalizes well")
+if train_score > test_score + 0.1:
+    st.warning("Overfitting detected")
+elif test_score < 0.5:
+    st.warning("Weak model performance")
+else:
+    st.success("Model generalizes well")
 
-        # ================= LIVE PREDICTION GRAPH =================
-        st.subheader("Live Prediction vs Actual")
-        fig, ax = plt.subplots()
-        ax.plot(y_test, label="Actual")
-        ax.plot(y_pred_test, label="Predicted")
-        ax.legend()
-        st.pyplot(fig)
+# ================= LIVE PREDICTION GRAPH =================
+st.subheader("Live Prediction vs Actual")
+fig, ax = plt.subplots()
+ax.plot(y_test, label="Actual")
+ax.plot(y_pred_test, label="Predicted")
+ax.legend()
+st.pyplot(fig)
 
-        # ================= RESIDUALS =================
-        st.subheader("Residual Distribution")
-        residuals = y_test - y_pred_test
-        fig2, ax2 = plt.subplots()
-        sns.histplot(residuals, kde=True, ax=ax2)
-        st.pyplot(fig2)
+# ================= RESIDUALS =================
+st.subheader("Residual Distribution")
+residuals = y_test - y_pred_test
+fig2, ax2 = plt.subplots()
+sns.histplot(residuals, kde=True, ax=ax2)
+st.pyplot(fig2)
 
-        # ================= LEARNING CURVE =================
-        st.subheader("Learning Curve (Bias-Variance Test)")
-        if model_option != "Negative Binomial":
-            train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
-            curve_df = pd.DataFrame({
-                "Train Score": np.mean(train_scores, axis=1),
-                "Test Score": np.mean(test_scores, axis=1)
-            })
-            st.line_chart(curve_df)
-        else:
-            st.warning("Learning curve not available for Negative Binomial (statsmodels)")
+# ================= LEARNING CURVE =================
+st.subheader("Learning Curve (Bias-Variance Test)")
+if model_option != "Negative Binomial":
+    train_sizes, train_scores, test_scores = learning_curve(model, X, y, cv=5)
+    curve_df = pd.DataFrame({
+        "Train Score": np.mean(train_scores, axis=1),
+        "Test Score": np.mean(test_scores, axis=1)
+    })
+    st.line_chart(curve_df)
+else:
+    st.warning("Learning curve not available for Negative Binomial (statsmodels)")
 
-        # ================= FORECAST =================
-        st.subheader("Future Forecast Simulation")
-        last_input = X.tail(1)
-        future_preds = []
-        for _ in range(forecast_days):
-            if model_option == "Negative Binomial":
-                pred = model.predict(sm.add_constant(last_input))[0]
-            else:
-                pred = model.predict(last_input)[0]
-            future_preds.append(pred)
-        st.line_chart(future_preds)
+# ================= FORECAST =================
+st.subheader("Future Forecast Simulation")
+last_input = X.tail(1)
+future_preds = []
+for _ in range(forecast_days):
+    if model_option == "Negative Binomial":
+        pred = model.predict(sm.add_constant(last_input))[0]
+    else:
+        pred = model.predict(last_input)[0]
+    future_preds.append(pred)
+st.line_chart(future_preds)
 
-        # ================= CUSTOM INPUT PREDICTION =================
-       st.subheader("Predict with Custom Inputs")
+# ================= CUSTOM INPUT PREDICTION =================
+st.subheader("Predict with Custom Inputs")
 if selected_features:
     user_input = {}
     st.write("Enter values for prediction:")
