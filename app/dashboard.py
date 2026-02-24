@@ -15,7 +15,7 @@ from statsmodels.genmod.families import NegativeBinomial
 
 # ================= PAGE CONFIG =================
 st.set_page_config(page_title="AI ML Research Platform", layout="wide")
-st.title("🚀 Intelligent Machine Learning Research & Analysis Platform")
+st.title(" Intelligent Machine Learning Research & Analysis Platform")
 
 # ================= SAVE FOLDER =================
 MODEL_DIR = "models"
@@ -48,12 +48,12 @@ df1 = df2 = None
 
 if uploaded_file1:
     df1 = load_csv(uploaded_file1)
-    st.subheader("📊 Dataset 1 Preview")
+    st.subheader(" Dataset 1 Preview")
     st.dataframe(df1.head())
 
 if uploaded_file2:
     df2 = load_csv(uploaded_file2)
-    st.subheader("📊 Dataset 2 Preview")
+    st.subheader(" Dataset 2 Preview")
     st.dataframe(df2.head())
 
 # Feature selection
@@ -66,7 +66,7 @@ if df1 is not None:
 
 # ================= DATASET COMPARISON =================
 if df1 is not None and df2 is not None:
-    st.subheader("🔄 Dataset Statistical Comparison")
+    st.subheader(" Dataset Statistical Comparison")
     # Align columns for comparison
     common_cols = df1.select_dtypes(include=[np.number]).columns.intersection(df2.select_dtypes(include=[np.number]).columns)
     if not common_cols.empty:
@@ -111,7 +111,7 @@ if run_button:
 
         y_vals = y.values.ravel()
 
-        st.subheader("📈 Dataset Summary")
+        st.subheader(" Dataset Summary")
         st.write(df1.describe())
 
         # Split dataset
@@ -144,7 +144,7 @@ if run_button:
                 y_pred_train = model.predict(X_train)
                 y_pred_test = model.predict(X_test)
 
-            st.success(f"✅ {model_option} Trained Successfully")
+            st.success(f" {model_option} Trained Successfully")
 
             # ================= EVALUATION =================
             st.subheader("⚖️ Model Evaluation")
@@ -188,7 +188,7 @@ if run_button:
 
             # ================= CUSTOM INPUT PREDICTION =================
             st.markdown("---")
-            st.subheader("🔮 Predict with Custom Inputs")
+            st.subheader(" Predict with Custom Inputs")
             with st.expander("Configure Input Features", expanded=True):
                 user_input = {}
                 cols = st.columns(3)
