@@ -102,22 +102,16 @@ if run_button:
         )
 
         # ================= SELECT MODEL =================
-      # ================= SELECT MODEL =================
-if model_option == "Linear Regression":
+    if model_option == "Linear Regression":
     model = LinearRegression()
-
 elif model_option == "Logistic Regression":
     model = LogisticRegression(max_iter=1000)
-
 elif model_option == "Decision Tree":
     model = DecisionTreeRegressor()
-
 elif model_option == "Random Forest":
     model = RandomForestRegressor()
-
 elif model_option == "KNN":
     model = KNeighborsRegressor()
-
 elif model_option == "Negative Binomial":
     X_train_nb = sm.add_constant(X_train)
     X_test_nb = sm.add_constant(X_test)
