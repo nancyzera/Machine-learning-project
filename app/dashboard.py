@@ -102,29 +102,28 @@ if run_button:
         )
 
         # ================= SELECT MODEL =================
-        if model_option == "Linear Regression":
+      # ================= SELECT MODEL =================
+if model_option == "Linear Regression":
     model = LinearRegression()
+
 elif model_option == "Logistic Regression":
     model = LogisticRegression(max_iter=1000)
+
 elif model_option == "Decision Tree":
     model = DecisionTreeRegressor()
+
 elif model_option == "Random Forest":
     model = RandomForestRegressor()
+
 elif model_option == "KNN":
     model = KNeighborsRegressor()
+
 elif model_option == "Negative Binomial":
     X_train_nb = sm.add_constant(X_train)
     X_test_nb = sm.add_constant(X_test)
     model = sm.GLM(y_train, X_train_nb, family=NegativeBinomial()).fit()
     y_pred_train = model.predict(X_train_nb)
     y_pred_test = model.predict(X_test_nb)
-        # Train normal ML models
-        if model_option != "Negative Binomial":
-            model.fit(X_train, y_train)
-            y_pred_train = model.predict(X_train)
-            y_pred_test = model.predict(X_test)
-
-        st.success("Model Trained Successfully")
 
         # ================= MATHEMATICAL THEORY =================
         st.subheader("Mathematical Representation & Theory")
