@@ -136,13 +136,63 @@ if run_button:
         y_pred_train = model.predict(X_train)
         y_pred_test = model.predict(X_test)
 
-    elif model_option == "Negative Binomial":
-        X_train_nb = sm.add_constant(X_train)
-        X_test_nb = sm.add_constant(X_test)
-        model = sm.GLM(y_train, X_train_nb, family=NegativeBinomial()).fit()
+    # elif model_option == "Negative Binomial":
+    #     X_train_nb = sm.add_constant(X_train)
+    #     X_test_nb = sm.add_constant(X_test)
+    #     model = sm.GLM(y_train, X_train_nb, family=NegativeBinomial()).fit()
+    #     y_pred_train = model.predict(X_train_nb)
+    #     y_pred_test = model.predict(X_test_nb)
+elif model_option == "Negative Binomial":
+
+    # ================= NEGATIVE BINOMIAL SAFETY CHECKS =================
+    
+    # 1️⃣ Ensure target is numeric
+    if not np.issubdtype(y_train.dtype, np.number):
+        st.error("Negative Binomial requires numeric target values.")
+        st.stop()
+
+    # 2️⃣ Ensure no negative values (NB is for count data)
+    if (y_train < 0).any():
+        st.error("Negative Binomial cannot be used with negative target values.")
+        st.stop()
+
+    # 3️⃣ Ensure target is not constant
+    if len(np.unique(y_train)) <= 1:
+        st.error("Target column must contain more than one unique value.")
+        st.stop()
+
+    # ================= NB PARAMETER INPUT =================
+    
+    alpha_value = st.sidebar.number_input(
+        "Dispersion Parameter (alpha)",
+        min_value=0.01,
+        max_value=10.0,
+        value=1.0,
+        step=0.1
+    )
+
+    try:
+        # 4️⃣ Add constant term properly
+        X_train_nb = sm.add_constant(X_train, has_constant='add')
+        X_test_nb = sm.add_constant(X_test, has_constant='add')
+
+        # 5️⃣ Define GLM model
+        nb_model = sm.GLM(
+            y_train,
+            X_train_nb,
+            family=NegativeBinomial(alpha=alpha_value)
+        )
+
+        # 6️⃣ Fit model
+        model = nb_model.fit()
+
+        # 7️⃣ Predictions
         y_pred_train = model.predict(X_train_nb)
         y_pred_test = model.predict(X_test_nb)
 
+    except Exception as e:
+        st.error(f"Negative Binomial model failed: {e}")
+        st.stop()
     # ================= THEORY =================
     st.subheader("Mathematical Representation & Theory")
 
