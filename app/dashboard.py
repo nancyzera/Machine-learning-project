@@ -28,7 +28,7 @@ uploaded_file2 = st.sidebar.file_uploader("Upload Dataset 2 (optional)", type="c
 
 model_option = st.sidebar.selectbox(
     "Choose Model",
-    ["Linear Regression", "Logistic Regression", "Decision Tree",
+    ["Linear Regression", "Decision Tree",
      "Random Forest", "KNN", "Negative Binomial"]
 )
 
